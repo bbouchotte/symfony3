@@ -1,0 +1,26 @@
+{% extends 'BookBundle::base.html.twig' %}
+
+	{% block title %}
+	
+		{{ parent() }}-The Book
+		
+	{% endblock %}
+
+	{% block body %}
+	
+		{{ parent() }}
+	
+	{% endblock %}
+	
+	{% block body_content %}	
+		<h2>
+			<a href="https://symfony.com/doc/current/cookbook/index.html" target="_blank">
+				The Cookbook
+			</a>
+		</h2>
+		
+		<a href="{{ path('cookbook_security') }}">
+			Security
+		</a>
+		
+	{% endblock %}	

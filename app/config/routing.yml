@@ -1,0 +1,17 @@
+cookbook:
+    resource: "@CookbookBundle/Controller/"
+    type:     annotation
+    prefix:   /cookbook/
+
+book:
+    resource: "@BookBundle/Controller/"
+    type:     annotation
+    prefix:   /book/
+
+symfony:
+    resource: "@SymfonyBundle/Controller/"
+    type:     annotation
+    prefix:   /
+
+
+

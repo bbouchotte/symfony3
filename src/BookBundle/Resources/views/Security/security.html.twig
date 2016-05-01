@@ -1,0 +1,103 @@
+{% extends 'BookBundle::base.html.twig' %}
+
+{% block body_content %}
+	<h2>
+		<a href="https://symfony.com/doc/current/book/security.html" target="_blank">
+			Security
+		</a>
+	</h2>
+	
+	<h4>1. Initial security.yml Setup (Authentication)</h4>
+	<p>The security system is configured in app/config/security.yml.</p>
+	<p>
+		<a href="https://symfony.com/doc/current/cookbook/security/firewall_restriction.html" target="_blank">
+			How to Restrict Firewalls to a Specific Request.
+		</a>
+	</p>
+	<p>
+		Security is highly configurable and there's a 
+		<a href="https://symfony.com/doc/current/reference/configuration/security.html" target="_blank">
+		Security Configuration Reference  
+		</a>
+		that shows all of the options with some extra explanation.
+	</p>
+	
+	<h5>A. Configuring how your Users will Authenticate</h5>
+	<p>Let's start with HTTP basic authentication (the old-school prompt) and work up from there. To activate this, add the http_basic key under your firewall:</p>
+	<pre># app/config/security.yml
+security:
+    # ...
+
+    firewalls:
+        # ...
+        default:
+            anonymous: ~
+            http_basic: ~</pre>
+	<pre>use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Symfony\Component\HttpFoundation\Response;
+
+class DefaultController extends Controller {
+    /**
+     * @Route("/admin")
+     */
+    public function adminAction()     {
+        return new Response('<html><body>Admin page!</body></html>');
+    }
+}</pre>
+	<pre># app/config/security.yml
+security:
+    # ...
+
+    access_control:
+        # require ROLE_ADMIN for /admin*
+        - { path: ^/admin, roles: ROLE_ADMIN }</pre>
+	<p>
+		Great! Now, if you go to /admin, you'll see the HTTP basic auth prompt.
+		<a href="{{ path('admin') }}">
+			http://localhost:8000/app_dev.php/admin
+		</a>		
+	</p>
+	<p>
+		Want to use a traditional login form? Great! See 
+		<a href="https://symfony.com/doc/current/cookbook/security/form_login_setup.html" target="_blank">
+			How to Build a Traditional Login Form 
+		</a>
+		. What other methods are supported? See the 
+		<a href="https://symfony.com/doc/current/reference/configuration/security.html" target="_blank">
+			Configuration Reference 
+		</a>
+		or 
+		<a href="https://symfony.com/doc/current/cookbook/security/custom_authentication_provider.html" target="_blank">
+			build your own.
+		</a>
+	</p>
+	<p>If your application logs users in via a third-party service such as Google, Facebook or Twitter, check out the HWIOAuthBundle community bundle.</p>
+	
+	<h5>
+		<a href="https://symfony.com/doc/current/book/security.html#b-configuring-how-users-are-loaded" target="_blank">
+			B. Configuring how Users are Loaded
+		</a>
+	</h5>
+	<p>
+		Symfony has a built-in way to 
+		<a href="https://symfony.com/doc/current/cookbook/security/entity_provider.html" target="_blank">
+			load users from the database
+		</a>
+		, or you can create your 
+		<a href="https://symfony.com/doc/current/cookbook/security/custom_provider.html" target="_blank">
+			own user provider
+		</a>.
+	</p>
+	<pre>security:
+    # ...
+
+    encoders:
+        Symfony\Component\Security\Core\User\User: plaintext</pre>
+	
+	
+	
+	
+	
+	
+	
+{% endblock %}

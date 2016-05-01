@@ -1,0 +1,28 @@
+{% extends 'BookBundle::base.html.twig' %}
+
+	{% block title %}
+	
+		{{ parent() }}-The Book
+		
+	{% endblock %}
+
+	{% block body %}
+	
+		{{ parent() }}
+	
+	{% endblock %}
+	
+	{% block body_content %}
+
+		<h4>
+			<a href="https://symfony.com/doc/current/cookbook/security/index.html" target="_blank">
+				Security Authentication (Identifying/Logging in the User)
+			</a>
+		</h4>
+		<h5>
+			<a href="https://symfony.com/doc/current/cookbook/security/form_login_setup.html" target="_blank">
+				How to Build a Traditional Login Form
+			</a>
+		</h5>	
+		
+	{% endblock %}	

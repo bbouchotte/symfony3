@@ -1,0 +1,15 @@
+{% extends 'BookBundle::base.html.twig' %}
+
+{% block body_content %}
+	
+	{% for article in articles %}
+		
+		<h3 class="byline">{{ article.designation }}</h3>
+		
+		<p>
+		    Prix:{{ article.prix }}
+		</p>
+		
+	{% endfor %}
+	
+{% endblock %}

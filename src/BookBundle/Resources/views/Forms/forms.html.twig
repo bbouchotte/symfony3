@@ -1,0 +1,427 @@
+{% extends 'BookBundle::base.html.twig' %}
+
+{% block body_content %}
+
+	<h1>Forms</h1>
+	
+	<h4>Building the Form - Handling Form Submissions</h4>
+	<p>In controller (not recommanded)</p>
+	<pre>namespace AppBundle\Controller;
+
+use AppBundle\Entity\Task;
+use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\Extension\Core\Type\DateType;
+use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+
+class DefaultController extends Controller {
+    public function newAction(Request $request) {
+        // create a task and give it some dummy data for this example
+        $task = new Task();
+        $task->setTask('Write a blog post');
+        $task->setDueDate(new \DateTime('tomorrow'));
+
+        $form = $this->createFormBuilder($task)
+            ->add('task', TextType::class)
+            ->add('dueDate', DateType::class)
+            ->add('save', SubmitType::class, array('label' => 'Create Task'))
+            ->add('saveAndAdd', SubmitType::class, array('label' => 'Save and Add'))
+            ->getForm();
+        $form->handleRequest($request);
+	
+    	if ($form->get('saveAndAdd')->isClicked()) {
+            return new Response('Add task successfull.');
+    	} else {
+            return new Response('Save task successfull.');
+    	}
+        return $this->render('default/new.html.twig', array(
+            'form' => $form->createView(),
+        ));	// createView() should be called after handleRequest is called.
+    }
+}</pre>
+	<pre>{% verbatim %}{{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+{{ form_widget(form) }}
+{{ form_end(form) }}{% endverbatim %}</pre>
+	<p>If you need more control over exactly when your form is submitted or which data is passed to it, you can use the 
+		<a href="http://api.symfony.com/3.0/Symfony/Component/Form/FormInterface.html#method_submit" target="_blank">
+			submit()
+		</a> for this. Read more about it in 
+		<a href="https://symfony.com/doc/current/cookbook/form/direct_submit.html#cookbook-form-call-submit-directly" target="_blank">
+			the cookbook.
+		</a>
+	</p>
+	<p>Disable HTML5 Validation:</p>
+	<pre>{% verbatim %}{{ form(form, {'attr': {'novalidate': 'novalidate'}}) }}{% endverbatim %}</pre>
+	<p>
+		<a href="{{ path('buildingForms') }}">
+			Exercice
+		</a>
+	</p>
+	<p>
+		If you're creating 
+		<a href="https://symfony.com/doc/current/book/forms.html#book-form-creating-form-classes" target="_blank">
+			form classes 
+		</a>
+		(a good practice), then you'll need to add the following to the configureOptions() method:
+	</p>
+	<pre>use Symfony\Component\OptionsResolver\OptionsResolver;
+
+public function configureOptions(OptionsResolver $resolver) {
+    $resolver->setDefaults(array(
+        'validation_groups' => array('registration'),
+    ));
+}</pre>
+	<p>In both of these cases, only the registration validation group will be used to validate the underlying object.</p>
+	
+	<h4>Disabling Validation</h4>
+	<pre>use Symfony\Component\OptionsResolver\OptionsResolver;
+
+public function configureOptions(OptionsResolver $resolver) {
+    $resolver->setDefaults(array(
+        'validation_groups' => false,
+    ));
+}</pre>
+
+	<h4>
+		<a href="https://symfony.com/doc/current/book/forms.html#groups-based-on-the-submitted-data" target="_blank">
+			Groups based on the Submitted Data
+		</a>
+	</h4>
+	<p>TODO</p>
+	
+	<h4>Groups based on the Clicked Button</h4>
+	<pre>$form = $this->createFormBuilder($task)
+    // ...
+
+    ->add('previousStep', SubmitType::class, array(
+        'validation_groups' => false,
+    ))
+    ->getForm();</pre>
+    
+	<h4>
+		<a href="https://symfony.com/doc/current/book/forms.html#built-in-field-types" target="_blank">
+			Built-in Field Types
+		</a>
+	</h4>
+	<p>
+		<a href="https://symfony.com/doc/current/cookbook/form/create_custom_field_type.html" target="_blank">
+		How to Create a Custom Form Field Type
+		</a>
+	</p>
+	
+	<h4>Field Type Options</h4>
+	<pre>->add('dueDate', DateType::class, array('widget' => 'single_text'))</pre>
+	<p>By default, the required option is set to true.Disable it:</p>
+	<pre>->add('dueDate', DateType::class, array(
+    'widget' => 'single_text',
+    'required' => false,
+    'label' => Due Date,
+))</pre>
+
+	<h4>
+		<a href="https://symfony.com/doc/current/book/forms.html#field-type-guessing" target="_blank">
+			Field Type Guessing
+		</a>
+	</h4>
+	<p>The "guessing" is activated when you omit the second argument to the add() method (or if you pass null to it).</p>
+	<h5>Field Type Options Guessing</h5>
+	<pre>->add('task', null, array('attr' => array('maxlength' => 4)))</pre>
+	
+	<h4>
+		<a href="https://symfony.com/doc/current/book/forms.html#rendering-a-form-in-a-template" target="_blank">
+			Rendering a Form in a Template
+		</a>
+	</h4>
+    <pre>{% verbatim %}{{ form_start(form) }}
+    {{ form_errors(form) }}
+
+    {{ form_row(form.task) }}
+    {{ form_row(form.dueDate) }}
+{{ form_end(form) }}{% endverbatim %}</pre>
+	<p>form_errors(form) : Renders any errors global to the whole form (field-specific errors are displayed next to each field).
+	<p>form_row(form.dueDate) : Renders the label, any errors, and the HTML form widget for the given field (e.g. dueDate) inside, by default, a div element.</p>
+	<p>You can access the current data of your form via form.vars.value:</p>
+	<pre>{% verbatim %}{{ form.vars.value.task }}{% endverbatim %}</pre>
+	
+	<h4>Rendering each Field by Hand</h4>
+	<pre>{% filter escape %} {% verbatim %}{{ form_start(form) }}
+    {{ form_errors(form) }}
+
+    <div>
+        {{ form_label(form.task) }}
+        {{ form_errors(form.task) }}
+        {{ form_widget(form.task) }}
+    </div>
+
+    <div>
+        {{ form_label(form.dueDate) }}
+        {{ form_errors(form.dueDate) }}
+        {{ form_widget(form.dueDate) }}
+    </div>
+
+    <div>
+        {{ form_widget(form.save) }}
+    </div>
+
+{{ form_end(form) }}{% endverbatim %} {% endfilter %}</pre>
+	<p>If the auto-generated label for a field isn't quite right, you can explicitly specify it:</p>
+	<pre>{% verbatim %}{{ form_label(form.task, 'Task Description') }}{% endverbatim %}</pre>
+	<p>Some field types have additional rendering options that can be passed to the widget.</p>
+	<pre>{% verbatim %}{{ form_widget(form.task, {'attr': {'class': 'task_field'}}) }}{% endverbatim %}</pre>	
+	<p>access individual values for fields such as the id, name and label:</p>
+	<pre>{% verbatim %} {{ form.task.vars.full_name }} {% endverbatim %}</pre>
+	
+	<h4>
+		<a href="https://symfony.com/doc/current/reference/forms/twig_reference.html" target="_blank">
+			Twig Template Function Reference
+		</a>
+	</h4>
+	
+	<h4>Changing the Action and Method of a Form</h4>
+	<p>setAction() and setMethod():</p>
+	<pre>$form = $this->createFormBuilder($task)
+    ->setAction($this->generateUrl('target_route'))
+    ->setMethod('GET')
+    ->add('task', TextType::class)
+    ->add('dueDate', DateType::class)
+    ->add('save', SubmitType::class)
+    ->getForm();</pre>
+    <p>In creating form classes,  When using an external form class in the controller, you can pass the action and method as form options:</p>
+    <pre>$form = $this->createForm(TaskType::class, $task, array(
+    'action' => $this->generateUrl('target_route'),
+    'method' => 'GET',
+));</pre>
+	<pre>{% verbatim %}{{ form_start(form, {'action': path('target_route'), 'method': 'GET'}) }}{% endverbatim %}</pre>
+	
+	<h4>
+		<a href="https://symfony.com/doc/current/book/forms.html#creating-form-classes" target="_blank">
+			Creating Form Classes
+		</a>
+	</h4>
+	<pre>php bin/console generate:doctrine:form FormsBundle:Task</pre>
+	<pre>namespace AppBundle\Form\Type;
+
+use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+
+class TaskType extends AbstractType {
+    public function buildForm(FormBuilderInterface $builder, array $options) {
+        $builder
+            ->add('task')
+            ->add('dueDate', null, array('widget' => 'single_text'))
+            ->add('save', SubmitType::class)
+        ;
+    }
+}</pre>
+	<pre>use AppBundle\Form\Type\TaskType;
+
+public function newAction()
+{
+    $task = ...;
+    $form = $this->createForm(TaskType::class, $task);</pre>
+    <h5>Setting the data_class</h5>
+    <pre>use Symfony\Component\OptionsResolver\OptionsResolver;
+
+public function configureOptions(OptionsResolver $resolver)
+{
+    $resolver->setDefaults(array(
+        'data_class' => 'AppBundle\Entity\Task',
+    ));
+}</pre>
+	<p>In cases where you need extra fields in the form (for example: a "do you agree with these terms" checkbox) that will not be mapped to the underlying object, you need to set the mapped option to false and set to null:</p>
+	<pre>use Symfony\Component\Form\FormBuilderInterface;
+
+public function buildForm(FormBuilderInterface $builder, array $options) {
+    $builder
+        ->add('task')
+        ->add('dueDate', null, array('mapped' => false))
+        ->add('save', SubmitType::class)
+    ;
+}</pre>
+	<p>The field data can be accessed in a controller with:</p>
+	<pre>$form->get('dueDate')->getData();</pre>
+	
+	<h4>
+		<a href="https://symfony.com/doc/current/book/forms.html#defining-your-forms-as-services" target="_blank">
+			Defining your Forms as Services
+		</a>
+	</h4>
+	<p>Create constructor:</p>
+	<pre>...
+use App\Utility\MyService;
+...
+class PersonageType extends AbstractType
+{
+	private $myService;
+	
+	public function __construct(MyService $myService) {}
+		$this->myService = $myService;
+	}
+...</pre>
+	<p>Define your form type as a service.</p>
+	<pre># src/FormsBundle/Resources/config/services.yml
+services:
+    app.form.type.task:
+        class: AppBundle\Form\Type\TaskType
+        arguments: ["@app.my_service"]
+        tags:
+            - { name: form.type }</pre>
+            
+	<h4>
+		<a href="https://symfony.com/doc/current/book/forms.html#embedded-forms" target="_blank">
+			Embedded Forms
+		</a>
+	</h4>
+	<p>See classes Personage and Clan</p>
+	
+	<h4>
+		<a href="https://symfony.com/doc/current/book/forms.html#form-theming" target="_blank">
+			Form Theming
+		</a>
+	</h4>
+	<pre>{% filter escape %}{% verbatim %}{# app/Resources/views/form/fields.html.twig #}
+{% block form_row %}
+{% spaceless %}
+    <div class="form_row">
+        {{ form_label(form) }}
+        {{ form_errors(form) }}
+        {{ form_widget(form) }}
+    </div>
+{% endspaceless %}
+{% endblock form_row %}{% endverbatim %}{% endfilter %}</pre>
+	<pre>{% verbatim %}{# app/Resources/views/default/new.html.twig #}
+{% form_theme form 'form/fields.html.twig' %}
+
+{# or if you want to use multiple themes #}
+{% form_theme form 'form/fields.html.twig' 'form/fields2.html.twig' %}
+
+{# ... render the form #}{% endverbatim %}</pre>
+	<p>
+		<a href="https://symfony.com/doc/current/cookbook/form/form_customization.html" target="_blank">
+			 How to Customize Form Rendering.
+		</a>
+	</p>
+	
+	<h4>Form Fragment Naming</h4>
+	<p>Each fragment follows the same basic pattern: type_part.</p>
+	<p>By default, there are 4 possible parts of a form that can be rendered:</p>
+	<ul>
+		<li>label 	(e.g. form_label) 	renders the field's label</li>
+		<li>widget 	(e.g. form_widget) 	renders the field's HTML representation</li>
+		<li>errors 	(e.g. form_errors) 	renders the field's errors</li>
+		<li>row 	(e.g. form_row) 	renders the field's entire row (label, widget & errors)</li>
+	</ul>
+	<p>There are actually 2 other parts - rows and rest - but you should rarely if ever need to worry about overriding them.</p>
+	<p>By knowing the field type (e.g. textarea) and which part you want to customize (e.g. widget), you can construct the fragment name that needs to be overridden (e.g. textarea_widget).</p>
+	
+	<h4>
+		<a href="https://symfony.com/doc/current/book/forms.html#template-fragment-inheritance" target="_blank">
+			Template Fragment Inheritance
+		</a>
+	</h4>
+	<p>
+		<a href="https://symfony.com/doc/current/reference/forms/types.html" target="_blank">
+			form type reference
+		</a>
+	</p>
+	
+	<h4>
+		Global Form Theming
+	</h4>
+	<p>Import form customizations across your entire project.</p>
+	<pre># app/config/config.yml
+twig:
+    form_themes:
+        - 'form/fields.html.twig'
+    # ...</pre>
+    
+    <h4>CSRF Protection</h4>
+    <p>
+    	The _token field is a hidden field and will be automatically rendered if you include the form_end() function in your template, which ensures that all un-rendered fields are output.
+    </p>
+    <p>For more information, see the 
+    	<a href="https://symfony.com/doc/current/reference/configuration/framework.html#reference-framework-form" target="_blank">
+    		form configuration reference 
+    	</a>
+    	section.
+    </p>
+    
+    <h4>Using a Form without a Class</h4>
+    <pre>// make sure you've imported the Request namespace above the class
+use Symfony\Component\HttpFoundation\Request;
+// ...
+
+public function contactAction(Request $request) {
+    $defaultData = array('message' => 'Type your message here');
+    $form = $this->createFormBuilder($defaultData)
+        ->add('name', TextType::class)
+        ->add('email', EmailType::class)
+        ->add('message', TextareaType::class)
+        ->add('send', SubmitType::class)
+        ->getForm();
+
+    $form->handleRequest($request);
+
+    if ($form->isValid()) {
+        // data is an array with "name", "email", and "message" keys
+        $data = $form->getData();	// return an array
+    }
+
+    // ... render the form</pre>
+	<p>
+		By default, a form actually assumes that you want to work with arrays of data, instead of an object. There are two ways that you can change this behavior and tie the form to an object instead:
+	</p>
+	<ul>
+		<li>Pass an object when creating the form (as the first argument to createFormBuilder or the second argument to createForm);</li>
+    	<li>Declare the data_class option on your form.</li>
+    </ul>
+    <p>You can also access POST values :</p><pre>You can also access POST values </pre>
+		
+	<h4>Adding Validation</h4>
+	<pre>use Symfony\Component\Validator\Constraints\Length;
+use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
+
+$builder
+   ->add('firstName', TextType::class, array(
+       'constraints' => new Length(array('min' => 3)),
+   ))
+   ->add('lastName', TextType::class, array(
+       'constraints' => array(
+           new NotBlank(),
+           new Length(array('min' => 3)),
+       ),
+   ))
+;</pre>
+	<p>The overall approach is covered a bit more in the 
+		<a href="https://symfony.com/doc/current/book/validation.html#book-validation-raw-values" target="_blank">
+			validation chapter
+		</a>
+	</p>
+	<p>Using validation group:</p>
+	<pre>new NotBlank(array('groups' => array('create', 'update'))</pre>
+	
+	<h4>Final thoughts</h4>
+	<p>There's still much more to learn about the powerful world of forms, such as how to handle 
+		<a href="https://symfony.com/doc/current/cookbook/doctrine/file_uploads.html" target="_blank">
+			file uploads with Doctrine 
+		</a>
+		or how to create a form where a dynamic number of sub-forms can be added (e.g. a todo list where you can keep adding more fields via JavaScript before submitting). See the cookbook for these topics. Also, be sure to lean on the 
+		<a href="https://symfony.com/doc/current/reference/forms/types.html" target="_blank">
+			field type reference documentation
+		</a>
+		, which includes examples of how to use each field type and its options.
+	</p>
+	
+	<h4>
+		<a href="https://symfony.com/doc/current/book/forms.html#learn-more-from-the-cookbook" target="_blank">
+			Learn more from the Cookbook
+		</a>
+	</h4> 
+	
+	
+	
+	
+{% endblock %}
